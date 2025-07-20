@@ -23,7 +23,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(express.json()); // Middleware to parse JSON requests
 
 // MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/webverse-game';
@@ -54,6 +54,7 @@ app.get('/', (req, res) => {
 // API Routes
 app.post('/api/players', async (req, res) => {
   console.log('Received a request to add a player');
+  console.log('Request body:', req.body); // Log the request body
   try {
     const { name, department, timeTaken } = req.body;
     if (!name || !department || timeTaken === undefined) {
