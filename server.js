@@ -28,12 +28,9 @@ app.use(express.json());
 // MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/webverse-game';
 
-mongoose.connect(MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log('MongoDB connection established'))
-.catch(err => console.error('MongoDB connection error:', err));
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log('MongoDB connection established'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 // Player Model
 const playerSchema = new mongoose.Schema({
