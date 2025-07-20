@@ -49,6 +49,11 @@ playerSchema.index({ score: -1, timeTaken: 1 });
 
 const Player = mongoose.model('Player', playerSchema);
 
+// Root Route
+app.get('/', (req, res) => {
+  res.status(200).send('Welcome to the Webverse Game API!');
+});
+
 // API Routes
 app.post('/api/players', async (req, res) => {
   try {
