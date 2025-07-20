@@ -51,7 +51,7 @@ const Player = mongoose.model('Player', playerSchema);
 
 // Root Route
 app.get('/', (req, res) => {
-  res.status(200).send('Welcome to the Webverse Game API!');
+  res.status(200).json({ message: 'Welcome to the Webverse Game API!' });
 });
 
 // API Routes
