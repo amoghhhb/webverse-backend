@@ -7,7 +7,7 @@ const app = express();
 // Enhanced CORS Configuration
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://webverse-game.vercel.app'
+  'https://webverse-flame.vercel.app' // Updated to the correct Vercel app URL
 ];
 
 const corsOptions = {
@@ -53,9 +53,11 @@ app.get('/', (req, res) => {
 
 // API Routes
 app.post('/api/players', async (req, res) => {
+  console.log('Received a request to add a player');
   try {
     const { name, department, timeTaken } = req.body;
     if (!name || !department || timeTaken === undefined) {
+      console.log('Missing required fields');
       return res.status(400).json({
         success: false,
         error: 'Missing required fields: name, department or timeTaken'
@@ -66,6 +68,7 @@ app.post('/api/players', async (req, res) => {
     const player = new Player({ name, department, timeTaken, score });
     await player.save();
     
+    console.log('Player saved successfully:', player);
     res.status(201).json({
       success: true,
       data: player
