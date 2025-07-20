@@ -7,7 +7,8 @@ const app = express();
 // Enhanced CORS Configuration
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://webverse-flame.vercel.app' // Updated to the correct Vercel app URL
+  'https://webverse-flame.vercel.app',
+  'https://webverse-game.vercel.app' // Add all possible frontend URLs
 ];
 
 const corsOptions = {
@@ -15,6 +16,7 @@ const corsOptions = {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.warn('Blocked by CORS:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -23,62 +25,88 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(express.json()); // Middleware to parse JSON requests
+app.use(express.json());
 
-// MongoDB Connection
+// MongoDB Connection with enhanced options
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/webverse-game';
 
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log('MongoDB connection established'))
-  .catch(err => console.error('MongoDB connection error:', err));
+mongoose.connect(MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000
+})
+.then(() => console.log('MongoDB connected successfully'))
+.catch(err => console.error('MongoDB connection error:', err));
 
-// Player Model
+// Player Model with validation
 const playerSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  department: { type: String, required: true },
-  timeTaken: { type: Number, required: true },
-  score: { type: Number, required: true },
-  createdAt: { type: Date, default: Date.now }
-}, { timestamps: true });
+  name: { 
+    type: String, 
+    required: true,
+    trim: true,
+    maxlength: 50
+  },
+  department: { 
+    type: String, 
+    required: true,
+    trim: true,
+    maxlength: 50 
+  },
+  timeTaken: { 
+    type: Number, 
+    required: true,
+    min: 0,
+    max: 600
+  },
+  score: { 
+    type: Number,
+    index: true 
+  }
+}, { 
+  timestamps: true 
+});
 
-// Create index for leaderboard queries
-playerSchema.index({ score: -1, timeTaken: 1 });
+// Auto-calculate score before saving
+playerSchema.pre('save', function(next) {
+  this.score = Math.floor((600 - this.timeTaken) * 1.5);
+  next();
+});
 
 const Player = mongoose.model('Player', playerSchema);
 
-// Root Route
-app.get('/', (req, res) => {
-  res.status(200).json({ message: 'Welcome to the Webverse Game API!' });
-});
-
-// API Routes
+// API Routes with improved error handling
 app.post('/api/players', async (req, res) => {
-  console.log('Received a request to add a player');
-  console.log('Request body:', req.body); // Log the request body
   try {
     const { name, department, timeTaken } = req.body;
+    
+    // Validate input
     if (!name || !department || timeTaken === undefined) {
-      console.log('Missing required fields');
       return res.status(400).json({
         success: false,
-        error: 'Missing required fields: name, department or timeTaken'
+        error: 'Missing required fields'
       });
     }
 
-    const score = Math.floor((600 - timeTaken) * 1.5);
-    const player = new Player({ name, department, timeTaken, score });
+    const player = new Player({ name, department, timeTaken });
     await player.save();
     
-    console.log('Player saved successfully:', player);
     res.status(201).json({
       success: true,
-      data: player
+      data: {
+        id: player._id,
+        name: player.name,
+        department: player.department,
+        timeTaken: player.timeTaken,
+        score: player.score,
+        createdAt: player.createdAt
+      }
     });
   } catch (error) {
-    console.error('Error saving player:', error);
+    console.error('Save player error:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Internal server error'
+      error: 'Failed to save player data'
     });
   }
 });
@@ -92,42 +120,34 @@ app.get('/api/leaderboard', async (req, res) => {
 
     const rankedPlayers = players.map((player, index) => ({
       ...player,
-      rank: index + 1
+      rank: index + 1,
+      timeFormatted: formatTime(player.timeTaken)
     }));
 
-    res.status(200).json({
+    res.json({
       success: true,
       data: rankedPlayers
     });
   } catch (error) {
-    console.error('Leaderboard fetch error:', error);
+    console.error('Leaderboard error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch leaderboard data'
+      error: 'Failed to load leaderboard'
     });
   }
 });
 
-// Health Check Endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK',
-    database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
-  });
-});
-
-// Global Error Handler
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    success: false,
-    error: 'Internal Server Error'
-  });
-});
+// Helper function
+function formatTime(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
 
 // Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
+  console.log(`Allowed origins: ${allowedOrigins.join(', ')}`);
+  console.log(`MongoDB URI: ${MONGODB_URI.includes('@') ? '*****' : MONGODB_URI}`);
 });
