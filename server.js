@@ -7,7 +7,8 @@ const app = express();
 // Enhanced CORS Configuration
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://webverse-flame.vercel.app/'
+  'https://webverse-flame.vercel.app',
+  'https://webverse-production.up.railway.app'
 ];
 
 const corsOptions = {
