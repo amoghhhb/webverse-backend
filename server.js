@@ -11,7 +11,7 @@ const allowedOrigins = [
   'https://webverse-production.up.railway.app',
   'http://localhost:3001',
   'http://localhost:3002',
-'http://localhost:3003'
+  'http://localhost:3003'
 ];
 
 const corsOptions = {
@@ -26,7 +26,13 @@ const corsOptions = {
   optionsSuccessStatus: 200
 };
 
+// Apply CORS middleware
 app.use(cors(corsOptions));
+
+// ⭐️ FIX: Add this line to explicitly handle all preflight requests
+app.options('*', cors(corsOptions)); 
+
+// Middleware to parse JSON
 app.use(express.json());
 
 // MongoDB Connection
@@ -48,22 +54,20 @@ const playerSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
-//
-app.post('/submit', (req, res) => {
-  const { name, department } = req.body; // 🔥 This works!
-
-  console.log('Name:', name);
-  console.log('Department:', department);
-
-  res.send({ message: 'Data received successfully!' });
-});
-
 // Create index for leaderboard queries
 playerSchema.index({ score: -1, timeTaken: 1 });
 
 const Player = mongoose.model('Player', playerSchema);
 
 // API Routes
+app.post('/submit', (req, res) => {
+  const { name, department } = req.body;
+  console.log('Test submission received:');
+  console.log('Name:', name);
+  console.log('Department:', department);
+  res.send({ message: 'Test data received successfully!' });
+});
+
 app.post('/api/players', async (req, res) => {
   try {
     const { name, department, timeTaken } = req.body;
