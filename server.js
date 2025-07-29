@@ -4,9 +4,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const app = express();
 
-// ----------------------------------------
-// ✅ CORS Configuration
-// ----------------------------------------
+// Enhanced CORS Configuration
 const allowedOrigins = [
   'http://localhost:3000',
   'https://webverse-flame.vercel.app',
@@ -29,17 +27,16 @@ const corsOptions = {
   optionsSuccessStatus: 200
 };
 
+// Apply CORS middleware
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // ✅ Preflight requests
 
-// ----------------------------------------
-// ✅ Middleware
-// ----------------------------------------
+// ⭐️ FIX: Add this line to explicitly handle all preflight requests
+app.options('*', cors(corsOptions)); 
+
+// Middleware to parse JSON
 app.use(express.json());
 
-// ----------------------------------------
-// ✅ MongoDB Connection
-// ----------------------------------------
+// MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/webverse-game';
 
 mongoose.connect(MONGODB_URI, {
@@ -49,41 +46,32 @@ mongoose.connect(MONGODB_URI, {
 .then(() => console.log('MongoDB connection established'))
 .catch(err => console.error('MongoDB connection error:', err));
 
-// ----------------------------------------
-// ✅ Mongoose Player Schema & Model
-// ----------------------------------------
+// Player Model
 const playerSchema = new mongoose.Schema({
   name: { type: String, required: true },
   department: { type: String, required: true },
-  email: { type: String }, // optional field
   timeTaken: { type: Number, required: true },
   score: { type: Number, required: true },
   createdAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
+// Create index for leaderboard queries
 playerSchema.index({ score: -1, timeTaken: 1 });
 
 const Player = mongoose.model('Player', playerSchema);
 
-// ----------------------------------------
-// ✅ Routes
-// ----------------------------------------
-
-// 🔹 Test Submission Route from LoginPage
+// API Routes
 app.post('/submit', (req, res) => {
-  const { name, department, email } = req.body;
+  const { name, department } = req.body;
   console.log('Test submission received:');
   console.log('Name:', name);
   console.log('Department:', department);
-  console.log('Email:', email);
   res.send({ message: 'Test data received successfully!' });
 });
 
-// 🔹 Submit final score from game
 app.post('/api/players', async (req, res) => {
   try {
-    const { name, department, email, timeTaken } = req.body;
-
+    const { name, department, timeTaken } = req.body;
     if (!name || !department || timeTaken === undefined) {
       return res.status(400).json({
         success: false,
@@ -91,10 +79,10 @@ app.post('/api/players', async (req, res) => {
       });
     }
 
-    const score = Math.max(0, Math.floor((600 - timeTaken) * 1.5)); // Clamp negative score
-    const player = new Player({ name, department, email, timeTaken, score });
+    const score = Math.floor((600 - timeTaken) * 1.5);
+    const player = new Player({ name, department, timeTaken, score });
     await player.save();
-
+    
     res.status(201).json({
       success: true,
       data: player
@@ -108,7 +96,6 @@ app.post('/api/players', async (req, res) => {
   }
 });
 
-// 🔹 Fetch leaderboard
 app.get('/api/leaderboard', async (req, res) => {
   try {
     const players = await Player.find()
@@ -134,15 +121,15 @@ app.get('/api/leaderboard', async (req, res) => {
   }
 });
 
-// 🔹 Health check
+// Health Check Endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({
+  res.status(200).json({ 
     status: 'OK',
     database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
   });
 });
 
-// 🔹 Global error handler
+// Global Error Handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
@@ -151,9 +138,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ----------------------------------------
-// ✅ Start Server
-// ----------------------------------------
+// Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
