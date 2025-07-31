@@ -9,11 +9,10 @@ const allowedOrigins = [
   'http://localhost:3000',
   'https://webverse-flame.vercel.app',
   'https://webverse-production.up.railway.app',
-  'http://localhost:3001',
-  'http://localhost:3002',
-  'http://localhost:3003',
-  'http://localhost:5173',
-  'http://127.0.0.1:5501/'
+  'https://set2.vercel.app',
+  'https://set3.vercel.app',
+  'https://set4.vercel.app',
+  'http://127.0.0.1:5501'
 ];
 
 const corsOptions = {
