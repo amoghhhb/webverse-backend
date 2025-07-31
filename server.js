@@ -9,9 +9,9 @@ const allowedOrigins = [
   'http://localhost:3000',
   'https://webverse-flame.vercel.app',
   'https://webverse-production.up.railway.app',
-  'https://set2.vercel.app',
-  'https://set3.vercel.app',
-  'https://set4.vercel.app',
+  'https://webverse-flames.vercel.app',
+  'https://webverse-flaames.vercel.app',
+  'https://webverse-fllamess.vercel.app',
   'http://127.0.0.1:5501'
 ];
 
