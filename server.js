@@ -12,7 +12,7 @@ const allowedOrigins = [
   'https://webverse-flames.vercel.app',
   'https://webverse-flaames.vercel.app',
   'https://webverse-fllamess.vercel.app',
-  'http://127.0.0.1:5501'
+  'https://escape-leaderboard.vercel.app'
 ];
 
 const corsOptions = {
